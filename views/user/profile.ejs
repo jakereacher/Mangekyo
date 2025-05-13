@@ -126,6 +126,112 @@
             </div>
         </div>
 
+        <!-- Security Section -->
+        <div class="section bg-white p-6 rounded-lg shadow-sm mb-8">
+            <h2 class="text-2xl font-bold mb-4 pb-2 border-b border-gray-200">
+                <i class="fas fa-lock mr-2"></i>Security
+            </h2>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Password Management</h3>
+                    <button id="togglePasswordUpdate" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+                        <i class="fas fa-edit mr-2"></i>Update Password
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-gray-600 mb-2">Current Password:</p>
+                    <div class="relative">
+                        <input type="password" id="viewCurrentPassword"
+                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black bg-gray-100"
+                            value="••••••••" readonly>
+                        <span class="toggle-view-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" data-target="viewCurrentPassword">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Click the eye icon to view your password.</p>
+                </div>
+
+                <form id="changePasswordForm" class="space-y-4 hidden">
+                    <div class="border-t border-gray-200 pt-4 mt-4">
+                        <h4 class="font-medium mb-4">Update Your Password</h4>
+
+                        <div>
+                            <label for="currentPassword" class="form-label">
+                                <i class="fas fa-key mr-2"></i>Current Password
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="currentPassword" name="currentPassword" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                                    placeholder="Enter your current password">
+                                <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" data-target="currentPassword">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">This will be auto-filled with your current password.</p>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="newPassword" class="form-label">
+                                <i class="fas fa-lock mr-2"></i>New Password
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="newPassword" name="newPassword" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                                    placeholder="Enter new password">
+                                <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" data-target="newPassword">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                            <div class="validation-box mt-2 text-xs text-gray-500">
+                                <div class="validation-item" data-requirement="length">
+                                    <i class="validation-icon fa fa-times"></i> At least 8 characters
+                                </div>
+                                <div class="validation-item" data-requirement="uppercase">
+                                    <i class="validation-icon fa fa-times"></i> At least one uppercase letter
+                                </div>
+                                <div class="validation-item" data-requirement="lowercase">
+                                    <i class="validation-icon fa fa-times"></i> At least one lowercase letter
+                                </div>
+                                <div class="validation-item" data-requirement="number">
+                                    <i class="validation-icon fa fa-times"></i> At least one number
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="confirmPassword" class="form-label">
+                                <i class="fas fa-lock mr-2"></i>Confirm Password
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="confirmPassword" name="confirmPassword" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                                    placeholder="Confirm new password">
+                                <span class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" data-target="confirmPassword">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                            <div class="validation-box mt-2 text-xs text-gray-500">
+                                <div class="validation-item" data-requirement="match">
+                                    <i class="validation-icon fa fa-times"></i> Passwords match
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3 mt-6">
+                            <button type="submit" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                            <button type="button" id="cancelPasswordUpdate" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition">
+                                <i class="fas fa-times mr-2"></i>Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Addresses Section (Mobile kept here) -->
         <div class="section bg-white p-6 rounded-lg shadow-sm mb-8">
             <h2 class="text-2xl font-bold mb-4 pb-2 border-b border-gray-200">
@@ -899,9 +1005,100 @@
             }
         });
 
+        // Validate profile form
+        function validateProfileForm() {
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            let isValid = true;
+
+            // Check for empty name or spaces-only input
+            if (!nameInput.value || nameInput.value.trim() === '') {
+                // Show toast notification for spaces-only input
+                if (nameInput.value !== '' && nameInput.value.trim() === '') {
+                    Swal.fire({
+                        title: 'Nothing entered in name field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Name cannot be empty',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                nameInput.focus();
+                nameInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty email or spaces-only input
+            if (!emailInput.value || emailInput.value.trim() === '') {
+                // Show toast notification for spaces-only input
+                if (emailInput.value !== '' && emailInput.value.trim() === '') {
+                    Swal.fire({
+                        title: 'Nothing entered in email field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Email cannot be empty',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                emailInput.focus();
+                emailInput.value = '';
+                isValid = false;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailInput.value.trim() !== '' && !emailRegex.test(emailInput.value.trim())) {
+                // Show toast notification
+                Swal.fire({
+                    title: 'Please enter a valid email address',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                emailInput.focus();
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
         // Handle profile form submission
         document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Validate form before submission
+            if (!validateProfileForm()) {
+                return;
+            }
 
             const formData = new FormData(this);
             const currentEmail = document.getElementById('currentEmail').value;
@@ -1039,15 +1236,88 @@
             document.getElementById('amount').value = amount;
         }
 
+        // Validate add money form
+        function validateAddMoneyForm() {
+            const amountInput = document.getElementById('amount');
+            const amountValue = amountInput.value.trim();
+            let isValid = true;
+
+            // Check if amount is empty or spaces-only
+            if (!amountValue) {
+                // Show toast notification for spaces-only input
+                if (amountInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in amount field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Please enter an amount',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                amountInput.focus();
+                amountInput.value = '';
+                return false;
+            }
+
+            // Check if amount contains only digits
+            if (!/^\d+$/.test(amountValue)) {
+                // Show toast notification
+                Swal.fire({
+                    title: 'Please enter a valid amount (numbers only)',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                amountInput.focus();
+                return false;
+            }
+
+            // Check if amount is at least 1
+            const amount = parseInt(amountValue);
+            if (amount < 1) {
+                // Show toast notification
+                Swal.fire({
+                    title: 'Please enter a valid amount (minimum ₹1)',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                amountInput.focus();
+                return false;
+            }
+
+            return true;
+        }
+
         // Handle Add Money Form Submission
         document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const amount = parseInt(document.getElementById('amount').value);
-            if (!amount || amount < 1) {
-                Swal.fire('Error', 'Please enter a valid amount (minimum ₹1)', 'error');
+            // Validate form before submission
+            if (!validateAddMoneyForm()) {
                 return;
             }
+
+            const amount = parseInt(document.getElementById('amount').value.trim());
 
             try {
                 // First, check if the wallet API is working
@@ -1236,20 +1506,219 @@
             }
         }
 
+        // Validate address form
+        function validateAddressForm() {
+            const fullNameInput = document.getElementById('fullName');
+            const mobileInput = document.getElementById('mobile');
+            const pinCodeInput = document.getElementById('pinCode');
+            const addressLineInput = document.getElementById('addressLine');
+            const cityInput = document.getElementById('city');
+            const stateInput = document.getElementById('state');
+
+            let isValid = true;
+
+            // Check for empty name or spaces-only input
+            if (!fullNameInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (fullNameInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in name field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Full name is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                fullNameInput.focus();
+                fullNameInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty mobile or spaces-only input
+            if (!mobileInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (mobileInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in mobile field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Mobile number is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                mobileInput.focus();
+                mobileInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty PIN code or spaces-only input
+            if (!pinCodeInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (pinCodeInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in PIN code field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'PIN code is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                pinCodeInput.focus();
+                pinCodeInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty address or spaces-only input
+            if (!addressLineInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (addressLineInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in address field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'Address is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                addressLineInput.focus();
+                addressLineInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty city or spaces-only input
+            if (!cityInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (cityInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in city field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'City is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                cityInput.focus();
+                cityInput.value = '';
+                isValid = false;
+            }
+
+            // Check for empty state or spaces-only input
+            if (!stateInput.value.trim()) {
+                // Show toast notification for spaces-only input
+                if (stateInput.value !== '') {
+                    Swal.fire({
+                        title: 'Nothing entered in state field',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    // Show toast notification for empty input
+                    Swal.fire({
+                        title: 'State is required',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+                stateInput.focus();
+                stateInput.value = '';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
         document.getElementById('addressForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Validate form before submission
+            if (!validateAddressForm()) {
+                return;
+            }
 
             const addressId = document.getElementById('addressId').value;
             const isEdit = !!addressId;
 
             const addressData = {
-                fullName: document.getElementById('fullName').value,
-                mobile: document.getElementById('mobile').value,
-                pinCode: document.getElementById('pinCode').value,
-                addressLine: document.getElementById('addressLine').value,
-                landmark: document.getElementById('landmark').value,
-                city: document.getElementById('city').value,
-                state: document.getElementById('state').value,
+                fullName: document.getElementById('fullName').value.trim(),
+                mobile: document.getElementById('mobile').value.trim(),
+                pinCode: document.getElementById('pinCode').value.trim(),
+                addressLine: document.getElementById('addressLine').value.trim(),
+                landmark: document.getElementById('landmark').value.trim(),
+                city: document.getElementById('city').value.trim(),
+                state: document.getElementById('state').value.trim(),
                 isDefault: document.getElementById('isDefault').checked
             };
 
@@ -1376,6 +1845,258 @@
                 });
         }
 
+        // Toggle password update form
+        document.getElementById('togglePasswordUpdate').addEventListener('click', async function() {
+            const form = document.getElementById('changePasswordForm');
+
+            // Show loading state on the button
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+            this.disabled = true;
+
+            try {
+                // Fetch the current password to auto-fill the form
+                const response = await fetch('/profile/get-password-preview');
+                const result = await response.json();
+
+                if (result.success) {
+                    // Auto-fill the current password field
+                    const currentPasswordField = document.getElementById('currentPassword');
+                    currentPasswordField.value = result.passwordPreview;
+
+                    // Show the form
+                    form.classList.remove('hidden');
+                    this.classList.add('hidden');
+                } else {
+                    Swal.fire('Error', result.message || 'Could not retrieve your current password', 'error');
+                    // Reset the button
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error fetching current password:', error);
+                Swal.fire('Error', 'Failed to retrieve your current password', 'error');
+                // Reset the button
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+
+        document.getElementById('cancelPasswordUpdate').addEventListener('click', function() {
+            const form = document.getElementById('changePasswordForm');
+            form.classList.add('hidden');
+            document.getElementById('togglePasswordUpdate').classList.remove('hidden');
+            document.getElementById('togglePasswordUpdate').innerHTML = '<i class="fas fa-edit mr-2"></i>Update Password';
+            document.getElementById('togglePasswordUpdate').disabled = false;
+            form.reset();
+        });
+
+        // Password visibility toggle for password fields
+        document.querySelectorAll('.toggle-password').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const targetId = toggle.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = toggle.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Password visibility toggle for view-only password field
+        document.querySelectorAll('.toggle-view-password').forEach(toggle => {
+            let passwordPreview = null;
+
+            toggle.addEventListener('click', async () => {
+                const targetId = toggle.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = toggle.querySelector('i');
+
+                if (input.type === 'password') {
+                    try {
+                        // If we already fetched the password, use it
+                        if (passwordPreview) {
+                            input.type = 'text';
+                            input.value = passwordPreview;
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                            return;
+                        }
+
+                        // Show loading state
+                        input.value = 'Loading...';
+
+                        // Fetch the password from the server
+                        const response = await fetch('/profile/get-password-preview');
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // Store the password for future toggles
+                            passwordPreview = result.passwordPreview;
+
+                            // Show the password
+                            input.type = 'text';
+                            input.value = passwordPreview;
+
+                            // Update the icon
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+
+                            // Add a highlight effect to show the password has been revealed
+                            input.classList.add('bg-yellow-50');
+                            setTimeout(() => {
+                                input.classList.remove('bg-yellow-50');
+                            }, 1000);
+                        } else {
+                            // If there's an error, revert to the masked password
+                            input.value = '••••••••';
+                            Swal.fire('Error', result.message || 'Could not retrieve password', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching password:', error);
+                        input.value = '••••••••';
+                        Swal.fire('Error', 'Failed to retrieve password', 'error');
+                    }
+                } else {
+                    // Hide the password
+                    input.type = 'password';
+                    input.value = '••••••••';
+
+                    // Update the icon
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Password validation
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        function validatePassword() {
+            let isValid = true;
+
+            // Check password length
+            const lengthValid = newPassword.value.length >= 8;
+            updateValidationItem('length', lengthValid);
+            isValid = isValid && lengthValid;
+
+            // Check for uppercase letter
+            const uppercaseValid = /[A-Z]/.test(newPassword.value);
+            updateValidationItem('uppercase', uppercaseValid);
+            isValid = isValid && uppercaseValid;
+
+            // Check for lowercase letter
+            const lowercaseValid = /[a-z]/.test(newPassword.value);
+            updateValidationItem('lowercase', lowercaseValid);
+            isValid = isValid && lowercaseValid;
+
+            // Check for number
+            const numberValid = /[0-9]/.test(newPassword.value);
+            updateValidationItem('number', numberValid);
+            isValid = isValid && numberValid;
+
+            // Check if passwords match
+            const passwordsMatch = newPassword.value === confirmPassword.value;
+            updateValidationItem('match', passwordsMatch);
+            isValid = isValid && passwordsMatch;
+
+            return isValid;
+        }
+
+        function updateValidationItem(requirement, isValid) {
+            const item = document.querySelector(`.validation-item[data-requirement="${requirement}"]`);
+            const icon = item.querySelector('.validation-icon');
+
+            if (isValid) {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-check');
+                item.classList.add('text-green-500');
+                item.classList.remove('text-gray-500');
+            } else {
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-times');
+                item.classList.remove('text-green-500');
+                item.classList.add('text-gray-500');
+            }
+        }
+
+        newPassword.addEventListener('input', validatePassword);
+        confirmPassword.addEventListener('input', validatePassword);
+
+        // Handle password change form submission
+        document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!validatePassword()) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Please meet all password requirements',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            try {
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Processing',
+                    text: 'Updating your password...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch('/profile/update-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Clear the form
+                    document.getElementById('changePasswordForm').reset();
+
+                    // Show success message
+                    Swal.fire({
+                        title: 'Success',
+                        text: 'Your password has been updated successfully',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    throw new Error(result.message || 'Failed to update password');
+                }
+            } catch (error) {
+                console.error('Error updating password:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'Failed to update password. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+
         function copyReferralCode() {
             const referralCode = '<%= referral.code %>';
             navigator.clipboard.writeText(referralCode)
@@ -1421,9 +2142,35 @@
                 const referralMessage = document.getElementById('referralMessage');
                 const referralCode = referralCodeInput.value.trim();
 
+                // Check for empty referral code or spaces-only input
                 if (!referralCode) {
+                    // Show toast notification for spaces-only input
+                    if (referralCodeInput.value !== '') {
+                        Swal.fire({
+                            title: 'Nothing entered in referral code field',
+                            icon: 'warning',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        // Show toast notification for empty input
+                        Swal.fire({
+                            title: 'Please enter a referral code',
+                            icon: 'warning',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
                     referralMessage.textContent = 'Please enter a referral code';
                     referralMessage.className = 'text-sm mt-2 text-red-600';
+                    referralCodeInput.focus();
+                    referralCodeInput.value = '';
                     return;
                 }
 

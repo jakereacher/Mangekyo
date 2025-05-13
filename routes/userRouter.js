@@ -84,6 +84,8 @@ router.post("/orders/:orderId/complete-payment", orderController.completePayment
 router.get("/profile", renderProfilePage);
 router.post("/profile/update", uploadProfileImage, handleProfileUpdate);
 router.post("/profile/verify-email", verifyEmailOtp);
+router.post("/profile/update-password", userAuth, require('../controllers/user/profileController').updatePassword);
+router.get("/profile/get-password-preview", userAuth, require('../controllers/user/profileController').getPasswordPreview);
 
 // Address routes
 router.post("/profile/addresses", handleAddress);

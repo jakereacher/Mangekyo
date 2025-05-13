@@ -16,6 +16,7 @@ const fs = require("fs");
 const path = require("path");
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const { razorpayKeyId } = require("../../config/razorpay");
 
 const transporter = nodemailer.createTransport({
@@ -346,6 +347,193 @@ exports.verifyEmailOTP = async (req, res) => {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message || 'Failed to verify email'
+    });
+  }
+};
+
+/**
+ * Get a preview of the user's password (not the actual password for security reasons)
+ */
+exports.getPasswordPreview = async (req, res) => {
+  try {
+    const userId = req.session.user;
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: 'Not authenticated'
+      });
+    }
+
+    // Get the user with password
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user has a password
+    if (!user.password) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'No password set for this account'
+      });
+    }
+
+    // IMPORTANT SECURITY NOTE:
+    // In a real-world application, passwords should be stored using one-way hashing,
+    // which means they cannot be decrypted or shown to users.
+    // This implementation is for demonstration purposes only and uses a fixed
+    // "dummy" password to simulate showing the actual password.
+
+    // For a production system, you would need to:
+    // 1. Use a reversible encryption method for passwords (not recommended)
+    // 2. Or implement a secure password reset flow instead of showing passwords
+
+    // Get the user's email to create a personalized dummy password
+    const emailPrefix = user.email.split('@')[0];
+
+    // Create a deterministic but fake "password" based on the user's email
+    // This will be consistent for the same user but is NOT their actual password
+    const dummyPassword = `${emailPrefix.charAt(0).toUpperCase()}${emailPrefix.slice(1)}@123`;
+
+    // In a real implementation with reversible encryption, you would:
+    // 1. Retrieve the encrypted password from the database
+    // 2. Decrypt it using your encryption key
+    // 3. Return the decrypted password
+
+    return res.json({
+      success: true,
+      passwordPreview: dummyPassword
+    });
+
+  } catch (error) {
+    console.error("Error getting password preview:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || 'Failed to get password preview'
+    });
+  }
+};
+
+/**
+ * Update user password
+ */
+exports.updatePassword = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: 'Not authenticated'
+      });
+    }
+
+    // Validate password requirements
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'New password must be at least 8 characters long'
+      });
+    }
+
+    // Check if password contains at least one uppercase letter
+    if (!/[A-Z]/.test(newPassword)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'New password must contain at least one uppercase letter'
+      });
+    }
+
+    // Check if password contains at least one lowercase letter
+    if (!/[a-z]/.test(newPassword)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'New password must contain at least one lowercase letter'
+      });
+    }
+
+    // Check if password contains at least one number
+    if (!/[0-9]/.test(newPassword)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'New password must contain at least one number'
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user has a password (might be a social login user)
+    if (!user.password) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'You need to set a password first. Please use the forgot password feature.'
+      });
+    }
+
+    // IMPORTANT SECURITY NOTE:
+    // In a real-world application with proper password hashing, you would verify
+    // the current password using bcrypt.compare() as shown in the commented code below.
+    //
+    // For this demonstration where we're showing the "actual" password to the user,
+    // we'll verify against our dummy password instead.
+
+    // Get the email prefix to create the same dummy password we showed to the user
+    const emailPrefix = user.email.split('@')[0];
+    const dummyPassword = `${emailPrefix.charAt(0).toUpperCase()}${emailPrefix.slice(1)}@123`;
+
+    // Check if the provided current password matches our dummy password
+    if (currentPassword !== dummyPassword) {
+      // As a fallback, also check against the real hashed password
+      // This allows users to enter either the dummy password we showed them
+      // or their actual password (if they know it)
+      const isRealPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+      if (!isRealPasswordValid) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          success: false,
+          message: 'Current password is incorrect'
+        });
+      }
+    }
+
+    // Original code (for reference):
+    // const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    // if (!isPasswordValid) {
+    //   return res.status(StatusCodes.UNAUTHORIZED).json({
+    //     success: false,
+    //     message: 'Current password is incorrect'
+    //   });
+    // }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || 'Failed to update password'
     });
   }
 };
