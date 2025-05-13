@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Order Details | Mangeyko</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         .status-processing { @apply bg-yellow-100 text-yellow-800; }
         .status-shipped { @apply bg-blue-100 text-blue-800; }
@@ -104,7 +108,7 @@
                                         </button>
                                     <% } %>
                                     <% if (item.status === 'Processing') { %>
-                                        <% if (order.paymentMethod === 'razorpay' || order.paymentMethod === 'wallet') { %>
+                                        <% if ((order.paymentMethod === 'razorpay' && order.paymentStatus === 'Paid') || order.paymentMethod === 'wallet') { %>
                                             <button onclick="requestCancellation('<%= order._id %>','<%= item.product._id %>')"
                                                     class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition flex items-center">
                                                 <i class="fas fa-times-circle mr-2"></i> Request Cancellation
@@ -196,8 +200,32 @@
                     <h2 class="text-xl font-bold mb-4 flex items-center">
                         <i class="fas fa-credit-card mr-2"></i> Payment Information
                     </h2>
-                    <p class="text-gray-600">Method: <%= order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Wallet' %></p>
-                    <p class="text-gray-600">Status: <%= order.paymentStatus %></p>
+                    <p class="text-gray-600">Method:
+                        <% if (order.paymentMethod === 'cod') { %>
+                            Cash on Delivery
+                        <% } else if (order.paymentMethod === 'razorpay') { %>
+                            Razorpay
+                        <% } else { %>
+                            Wallet
+                        <% } %>
+                    </p>
+                    <p class="text-gray-600">Status:
+                        <% if (order.paymentStatus === 'Paid') { %>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                                <%= order.paymentStatus %>
+                            </span>
+                        <% } else if (order.paymentStatus === 'Failed') { %>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                                <%= order.paymentStatus %>
+                            </span>
+                        <% } else if (order.paymentStatus === 'Pending') { %>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                                <%= order.paymentStatus %>
+                            </span>
+                        <% } else { %>
+                            <%= order.paymentStatus %>
+                        <% } %>
+                    </p>
                 </div>
 
                 <% if (order.couponCode) { %>
@@ -227,6 +255,12 @@
                 <a href="/orders/<%= order._id %>/invoice" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition flex items-center">
                     <i class="fas fa-file-invoice mr-2"></i> Download Invoice
                 </a>
+
+                <% if (order.paymentMethod === 'razorpay' && (order.paymentStatus === 'Pending' || order.paymentStatus === 'Failed')) { %>
+                    <button onclick="retryPayment('<%= order._id %>', <%= order.total %>)" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition flex items-center">
+                        <i class="fas fa-credit-card mr-2"></i> Pay Now
+                    </button>
+                <% } %>
 
                 <!-- <% if (order.status === 'Processing') { %>
                     <button onclick="cancelOrder('<%= order._id %>')"
@@ -273,6 +307,154 @@
     </div>
 
     <script>
+        // Function to retry payment for an order
+        async function retryPayment(orderId, amount) {
+            try {
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Processing',
+                    text: 'Initializing payment...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Create Razorpay order
+                const response = await fetch('/razorpay/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || result.error || 'Failed to create payment order');
+                }
+
+                // Close the loading indicator
+                Swal.close();
+
+                // Initialize Razorpay checkout
+                const options = {
+                    key: '<%= razorpayKeyId %>', // This should be passed from the server
+                    amount: result.order.amount,
+                    currency: result.order.currency || 'INR',
+                    name: 'Mangeyko',
+                    description: 'Complete your pending payment',
+                    order_id: result.order.id,
+                    image: 'https://i.imgur.com/3g7nmJC.png', // Add your logo URL here
+                    handler: async function(response) {
+                        // Show loading indicator
+                        Swal.fire({
+                            title: 'Verifying',
+                            text: 'Confirming your payment...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        try {
+                            // Verify payment with server
+                            const verifyResponse = await fetch('/razorpay/verify-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    order_id: orderId
+                                })
+                            });
+
+                            const verifyResult = await verifyResponse.json();
+
+                            if (verifyResult.success) {
+                                // Set flags to indicate order was completed
+                                sessionStorage.setItem('orderCompleted', 'true');
+                                sessionStorage.setItem('orderPlaced', 'true');
+
+                                // Show success message
+                                Swal.fire({
+                                    title: 'Payment Successful!',
+                                    text: 'Your payment has been processed successfully.',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    // Reload the page to show updated status
+                                    window.location.reload();
+                                });
+                            } else {
+                                throw new Error(verifyResult.message || 'Payment verification failed');
+                            }
+                        } catch (error) {
+                            console.error('Payment verification error:', error);
+                            Swal.fire({
+                                title: 'Payment Verification Failed',
+                                text: error.message || 'Failed to verify payment. Please try again.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    prefill: {
+                        name: '<%= user.name || "" %>',
+                        email: '<%= user.email || "" %>',
+                        contact: '<%= user.mobile || "" %>'
+                    },
+                    theme: {
+                        color: '#000000'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            Swal.fire({
+                                title: 'Payment Cancelled',
+                                text: 'You can retry the payment later.',
+                                icon: 'info',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (error) {
+                console.error('Error retrying payment:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'Failed to initialize payment. Please try again later.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+
+        // Handle back button navigation from checkout
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we came from a completed order
+            if (sessionStorage.getItem('orderCompleted') === 'true') {
+                // Clear the flag
+                sessionStorage.removeItem('orderCompleted');
+
+                // Keep the orderPlaced flag for back button handling
+                // This ensures if user hits back from here, they go to home
+            }
+        });
+
         // Cancel Order (for COD orders)
         async function cancelOrder(orderId, productId) {
             const confirmation = await Swal.fire({

@@ -272,6 +272,7 @@ const getOrderDetails = async (req, res) => {
     res.render("orderDetails", {
       order: orderDetails,
       user: req.session.user ? { id: userId } : null,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_your_key_id'
     });
   } catch (error) {
     console.error("Error fetching order details:", error);

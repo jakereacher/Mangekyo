@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Payment Successful | Mangeyko</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -32,14 +35,14 @@
             <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-check-circle text-green-600 text-5xl"></i>
             </div>
-            
+
             <h1 class="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h1>
-            
+
             <p class="text-gray-600 text-lg mb-8">
                 Your order has been placed successfully and is being processed.
                 Thank you for shopping with Mangeyko!
             </p>
-            
+
             <div class="bg-gray-50 p-6 rounded-lg mb-8">
                 <div class="flex justify-between mb-2">
                     <span class="font-medium">Order ID:</span>
@@ -56,7 +59,7 @@
                 </div>
                 <% } %>
             </div>
-            
+
             <div class="flex flex-col sm:flex-row justify-center gap-4">
                 <a href="/orders/<%= orderId %>" class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800 transition">
                     <i class="fas fa-eye mr-2"></i> View Order Details
@@ -91,5 +94,21 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        // Set a flag to indicate order was completed
+        sessionStorage.setItem('orderCompleted', 'true');
+        sessionStorage.setItem('orderPlaced', 'true');
+
+        // Handle back button navigation
+        window.addEventListener('DOMContentLoaded', function() {
+            // Prevent back button navigation
+            history.pushState(null, null, document.URL);
+            window.addEventListener('popstate', function () {
+                // Redirect to home page if back button is pressed
+                window.location.replace('/');
+            });
+        });
+    </script>
 </body>
 </html>

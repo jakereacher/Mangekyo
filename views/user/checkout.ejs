@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Checkout | Mangeyko</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -516,6 +519,44 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if an order was recently placed
+            const orderPlaced = sessionStorage.getItem('orderPlaced');
+
+            if (orderPlaced) {
+                // Clear the flag
+                sessionStorage.removeItem('orderPlaced');
+
+                // Redirect to home page if back button was used after order placement
+                window.location.href = '/';
+                return;
+            }
+
+            // Add history state management to handle back button
+            const pageState = { page: 'checkout' };
+            const pageTitle = 'Checkout';
+            const pageUrl = window.location.href;
+
+            // Replace current history state to prevent back button issues
+            history.replaceState(pageState, pageTitle, pageUrl);
+
+            // Add event listener for popstate (back/forward buttons)
+            window.addEventListener('popstate', function(event) {
+                // Check if an order was placed
+                if (sessionStorage.getItem('orderCompleted') === 'true') {
+                    // Redirect to home page
+                    window.location.replace('/');
+                } else {
+                    // Otherwise go back to cart
+                    window.location.replace('/cart');
+                }
+            });
+
+            // Prevent back button completely
+            history.pushState(null, null, document.URL);
+            window.addEventListener('popstate', function () {
+                history.pushState(null, null, document.URL);
+            });
+
             // If we have a default address, select it
             if (selectedAddressId) {
                 const addressCard = document.querySelector(`[data-address-id="${selectedAddressId}"]`);
@@ -884,6 +925,23 @@
                 return;
             }
 
+            // Check if an order is already in progress
+            if (sessionStorage.getItem('orderInProgress') === 'true') {
+                Swal.fire({
+                    title: 'Order Already in Progress',
+                    text: 'It looks like you already have an order being processed. Please wait or check your orders page.',
+                    icon: 'warning',
+                    confirmButtonText: 'Go to Orders',
+                    showCancelButton: true,
+                    cancelButtonText: 'Stay Here'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/orders';
+                    }
+                });
+                return;
+            }
+
             // Log the order data for debugging
             console.log("Placing order with data:", {
                 paymentMethod: selectedPaymentMethod,
@@ -894,11 +952,19 @@
             // Show loading overlay
             showLoadingOverlay();
 
+            // Add a flag to prevent back button issues
+            sessionStorage.setItem('orderInProgress', 'true');
+
+            // Add a timestamp to prevent duplicate orders
+            sessionStorage.setItem('orderTimestamp', Date.now().toString());
+
             try {
                 const response = await fetch('/checkout/place-order', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json', // Explicitly request JSON response
+                        'X-Requested-With': 'XMLHttpRequest' // Mark as AJAX request
                     },
                     body: JSON.stringify({
                         paymentMethod: selectedPaymentMethod,
@@ -1028,6 +1094,10 @@
                                             // Hide loading overlay before showing success message
                                             hideLoadingOverlay();
 
+                                            // Set flags to indicate order was completed
+                                            sessionStorage.setItem('orderCompleted', 'true');
+                                            sessionStorage.setItem('orderPlaced', 'true');
+
                                             // Redirect to payment success page
                                             window.location.href = `/payment/success/${result.orderId}?paymentId=${response.razorpay_payment_id}`;
                                         } else {
@@ -1093,6 +1163,10 @@
                             window.location.href = `/payment/failure/${result.orderId}?error=${encodedError}`;
                         }
                     } else {
+                        // Set flags to indicate order was completed
+                        sessionStorage.setItem('orderCompleted', 'true');
+                        sessionStorage.setItem('orderPlaced', 'true');
+
                         // For non-Razorpay payments, redirect to order confirmation page
                         window.location.href = `/orders/${result.orderId}`;
                     }
