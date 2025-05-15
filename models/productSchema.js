@@ -83,6 +83,7 @@ productSchema.virtual('finalPrice').get(function() {
 productSchema.methods.updateOfferDetails = async function() {
   const offerService = require('../services/offerService');
   const Offer = require('./offerSchema');
+  const Category = require('./categorySchema');
   const now = new Date();
 
   // Check if current offer is expired
@@ -117,6 +118,79 @@ productSchema.methods.updateOfferDetails = async function() {
 
     // Calculate offer percentage
     const offerPercentage = (offerResult.discountAmount / this.price) * 100;
+
+    // Log offer application details
+    console.log(`\n=== Applying Offer to Product ${this.productName} (${this._id}) ===`);
+    console.log(`- Offer: ${offer.name} (${offer._id})`);
+
+    // Highlight the offer type with a visual indicator
+    if (offer.type === 'product') {
+      console.log(`- Type: PRODUCT OFFER ⭐ (Product-specific offer applied)`);
+    } else if (offer.type === 'category') {
+      console.log(`- Type: CATEGORY OFFER ⭐ (Category-wide offer applied)`);
+    } else {
+      console.log(`- Type: ${offer.type}`);
+    }
+
+    console.log(`- Discount: ${offer.discountType === 'percentage' ? offer.discountValue + '%' : '₹' + offer.discountValue}`);
+    console.log(`- Discount Amount: ₹${offerResult.discountAmount.toFixed(2)}`);
+    console.log(`- Original Price: ₹${this.price.toFixed(2)}`);
+    console.log(`- Final Price: ₹${offerResult.finalPrice.toFixed(2)}`);
+    console.log(`- Offer Percentage: ${offerPercentage.toFixed(2)}%`);
+    console.log(`- Valid Until: ${offer.endDate.toLocaleDateString()}`);
+
+    // Check if there were competing offers
+    const Category = require('./categorySchema');
+    const category = await Category.findById(this.category);
+
+    if (category && category.offer) {
+      const categoryOffer = await Offer.findById(category.offer);
+      if (categoryOffer && categoryOffer._id.toString() !== offer._id.toString() &&
+          categoryOffer.isActive && categoryOffer.startDate <= now && categoryOffer.endDate >= now) {
+
+        const categoryDiscountAmount = categoryOffer.calculateDiscount(this.price);
+
+        if (offer.type === 'product') {
+          console.log(`\n📊 OFFER COMPARISON:`);
+          console.log(`  Selected PRODUCT offer (${offer.discountValue}${offer.discountType === 'percentage' ? '%' : '₹'}) saves ₹${offerResult.discountAmount.toFixed(2)}`);
+          console.log(`  Available CATEGORY offer (${categoryOffer.discountValue}${categoryOffer.discountType === 'percentage' ? '%' : '₹'}) would save ₹${categoryDiscountAmount.toFixed(2)}`);
+          console.log(`  PRODUCT offer is better by ₹${(offerResult.discountAmount - categoryDiscountAmount).toFixed(2)}`);
+        }
+      }
+    }
+
+    // Check for product offer if category offer was applied
+    if (offer.type === 'category') {
+      const productOffers = await Offer.find({
+        type: 'product',
+        applicableProducts: this._id,
+        isActive: true,
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      });
+
+      if (productOffers.length > 0) {
+        let bestProductOffer = null;
+        let bestProductDiscount = 0;
+
+        for (const productOffer of productOffers) {
+          const discountAmount = productOffer.calculateDiscount(this.price);
+          if (discountAmount > bestProductDiscount) {
+            bestProductDiscount = discountAmount;
+            bestProductOffer = productOffer;
+          }
+        }
+
+        if (bestProductOffer) {
+          console.log(`\n📊 OFFER COMPARISON:`);
+          console.log(`  Selected CATEGORY offer (${offer.discountValue}${offer.discountType === 'percentage' ? '%' : '₹'}) saves ₹${offerResult.discountAmount.toFixed(2)}`);
+          console.log(`  Available PRODUCT offer (${bestProductOffer.discountValue}${bestProductOffer.discountType === 'percentage' ? '%' : '₹'}) would save ₹${bestProductDiscount.toFixed(2)}`);
+          console.log(`  CATEGORY offer is better by ₹${(offerResult.discountAmount - bestProductDiscount).toFixed(2)}`);
+        }
+      }
+    }
+
+    console.log(`=================================================`);
 
     // Update product with offer details
     this.offerPercentage = parseFloat(offerPercentage.toFixed(2));

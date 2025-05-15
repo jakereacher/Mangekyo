@@ -175,8 +175,8 @@
                                                                 data-code="<%= coupon.code %>" data-type="<%= coupon.type %>"
                                                                 data-value="<%= coupon.discountValue %>" data-limit="<%= coupon.usageLimit %>"
                                                                 data-minprice="<%= coupon.minPrice %>" data-maxprice="<%= coupon.maxPrice %>"
-                                                                data-startdate="<%= coupon.startDate.toISOString().replace('Z', '') %>"
-                                                                data-expirydate="<%= coupon.expiryDate.toISOString().replace('Z', '') %>">
+                                                                data-startdate="<%= coupon.startDate.toISOString() %>"
+                                                                data-expirydate="<%= coupon.expiryDate.toISOString() %>">
                                                             <i class="fas fa-edit"></i> Edit
                                                         </button>
                                                         <button class="btn btn-sm btn-outline-danger delete-btn" data-id="<%= coupon._id %>">
@@ -436,31 +436,43 @@
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
                 minDate: "today",
+                time_24hr: true,
+                allowInput: true,
                 onChange: function (selectedDates, dateStr) {
-                    expiryDatePicker.set("minDate", dateStr);
+                    if (selectedDates[0]) {
+                        expiryDatePicker.set("minDate", selectedDates[0]);
+                    }
                 }
             });
 
             const expiryDatePicker = flatpickr("#expiryDate", {
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
-                minDate: "today"
+                minDate: "today",
+                time_24hr: true,
+                allowInput: true
             });
 
             // Initialize Flatpickr for edit modal
             const editStartDatePicker = flatpickr("#editStartDate", {
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
-                minDate: "today",
+                // No minDate to allow editing past dates
+                time_24hr: true,
+                allowInput: true,
                 onChange: function (selectedDates, dateStr) {
-                    editExpiryDatePicker.set("minDate", dateStr);
+                    if (selectedDates[0]) {
+                        editExpiryDatePicker.set("minDate", selectedDates[0]);
+                    }
                 }
             });
 
             const editExpiryDatePicker = flatpickr("#editExpiryDate", {
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
-                minDate: "today"
+                // No minDate to allow editing past dates
+                time_24hr: true,
+                allowInput: true
             });
 
             // Open edit modal and populate fields
@@ -481,9 +493,20 @@
                 console.log('Start Date from data attribute:', startDate);
                 console.log('Expiry Date from data attribute:', expiryDate);
 
+                // Parse the ISO string dates correctly
+                const parsedStartDate = startDate ? new Date(startDate) : null;
+                const parsedExpiryDate = expiryDate ? new Date(expiryDate) : null;
+
+                console.log('Parsed Start Date:', parsedStartDate);
+                console.log('Parsed Expiry Date:', parsedExpiryDate);
+
                 // Set the dates in the Flatpickr instances
-                editStartDatePicker.setDate(startDate);
-                editExpiryDatePicker.setDate(expiryDate);
+                if (parsedStartDate) {
+                    editStartDatePicker.setDate(parsedStartDate);
+                }
+                if (parsedExpiryDate) {
+                    editExpiryDatePicker.setDate(parsedExpiryDate);
+                }
 
                 $('#editCouponModal').modal('show');
             });

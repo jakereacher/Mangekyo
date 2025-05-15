@@ -115,12 +115,12 @@
                                         </td>
                                         <td>
                                             <% if (product.hasOffer) { %>
-                                                <strong class="text-success">₹<%= (product.finalPrice ? product.finalPrice.toFixed(2) : (product.price ? product.price.toFixed(2) : (product.salePrice ? product.salePrice.toFixed(2) : '0.00'))) %></strong>
+                                                <strong class="text-success">$<%= (product.finalPrice ? product.finalPrice.toFixed(2) : (product.price ? product.price.toFixed(2) : (product.salePrice ? product.salePrice.toFixed(2) : '0.00'))) %></strong>
                                                 <div class="small text-muted">
-                                                    Save: ₹<%= (product.discountAmount ? product.discountAmount.toFixed(2) : '0.00') %>
+                                                    Save: $<%= (product.discountAmount ? product.discountAmount.toFixed(2) : '0.00') %>
                                                 </div>
                                             <% } else { %>
-                                                ₹<%= (product.price ? product.price.toFixed(2) : (product.salePrice ? product.salePrice.toFixed(2) : (product.regularPrice ? product.regularPrice.toFixed(2) : '0.00'))) %>
+                                                $<%= (product.price ? product.price.toFixed(2) : (product.salePrice ? product.salePrice.toFixed(2) : (product.regularPrice ? product.regularPrice.toFixed(2) : '0.00'))) %>
                                             <% } %>
                                         </td>
                                         <td><%= product.quantity %></td>

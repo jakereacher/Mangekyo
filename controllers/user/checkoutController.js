@@ -118,17 +118,32 @@ exports.handleAddressSelection = async (req, res) => {
       { $set: { 'address.$.isDefault': true } }
     );
 
-    res.json({
-      success: true,
-      message: 'Default address updated'
-    });
+    // Return JSON response for AJAX requests
+    if (req.xhr || req.headers.accept.includes('application/json')) {
+      return res.json({
+        success: true,
+        message: 'Default address updated'
+      });
+    }
+
+    // For non-AJAX requests, redirect back to checkout
+    req.flash('success', 'Default address updated');
+    return res.redirect('/checkout');
 
   } catch (error) {
     console.error('Error updating default address:', error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Server error'
-    });
+
+    // Return JSON response for AJAX requests
+    if (req.xhr || req.headers.accept.includes('application/json')) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
+
+    // For non-AJAX requests, redirect back to checkout with error message
+    req.flash('error', 'Failed to update default address');
+    return res.redirect('/checkout');
   }
 };
 

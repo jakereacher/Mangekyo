@@ -298,9 +298,12 @@
       dateFormat: "Y-m-d H:i",
       time_24hr: true,
       minDate: "today",
+      allowInput: true,
       onChange: function(selectedDates, dateStr) {
         // Update end date min date when start date changes
-        endDatePicker.set("minDate", dateStr);
+        if (selectedDates[0]) {
+          endDatePicker.set("minDate", selectedDates[0]);
+        }
       }
     });
 
@@ -309,7 +312,8 @@
       enableTime: true,
       dateFormat: "Y-m-d H:i",
       time_24hr: true,
-      minDate: document.getElementById('startDate').value || "today"
+      minDate: document.getElementById('startDate').value || "today",
+      allowInput: true
     });
   });
 </script>

@@ -919,28 +919,15 @@
         }
 
         // Function to place the order
+        // Users can place new orders even if they have other orders in processing stage
         async function placeOrder() {
             if (!selectedAddressId || !selectedPaymentMethod) {
                 Swal.fire('Error', 'Please complete all checkout steps', 'error');
                 return;
             }
 
-            // Check if an order is already in progress
-            if (sessionStorage.getItem('orderInProgress') === 'true') {
-                Swal.fire({
-                    title: 'Order Already in Progress',
-                    text: 'It looks like you already have an order being processed. Please wait or check your orders page.',
-                    icon: 'warning',
-                    confirmButtonText: 'Go to Orders',
-                    showCancelButton: true,
-                    cancelButtonText: 'Stay Here'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/orders';
-                    }
-                });
-                return;
-            }
+            // Allow multiple orders to be placed even if other orders are in processing stage
+            // This check has been removed to allow users to place new orders regardless of existing orders
 
             // Log the order data for debugging
             console.log("Placing order with data:", {
@@ -952,10 +939,8 @@
             // Show loading overlay
             showLoadingOverlay();
 
-            // Add a flag to prevent back button issues
-            sessionStorage.setItem('orderInProgress', 'true');
-
             // Add a timestamp to prevent duplicate orders
+            // Using a unique timestamp for each order instead of a flag
             sessionStorage.setItem('orderTimestamp', Date.now().toString());
 
             try {
@@ -1094,9 +1079,8 @@
                                             // Hide loading overlay before showing success message
                                             hideLoadingOverlay();
 
-                                            // Set flags to indicate order was completed
-                                            sessionStorage.setItem('orderCompleted', 'true');
-                                            sessionStorage.setItem('orderPlaced', 'true');
+                                            // Set timestamp to indicate this specific order was completed
+                                            sessionStorage.setItem('orderCompleted_' + result.orderId, 'true');
 
                                             // Redirect to payment success page
                                             window.location.href = `/payment/success/${result.orderId}?paymentId=${response.razorpay_payment_id}`;
@@ -1163,9 +1147,8 @@
                             window.location.href = `/payment/failure/${result.orderId}?error=${encodedError}`;
                         }
                     } else {
-                        // Set flags to indicate order was completed
-                        sessionStorage.setItem('orderCompleted', 'true');
-                        sessionStorage.setItem('orderPlaced', 'true');
+                        // Set timestamp to indicate this specific order was completed
+                        sessionStorage.setItem('orderCompleted_' + result.orderId, 'true');
 
                         // For non-Razorpay payments, redirect to order confirmation page
                         window.location.href = `/orders/${result.orderId}`;
