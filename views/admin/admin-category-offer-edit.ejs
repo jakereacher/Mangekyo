@@ -311,10 +311,13 @@
       enableTime: true,
       dateFormat: "Y-m-d H:i",
       time_24hr: true,
-      minDate: "today",
+      // Remove minDate to allow editing past dates
+      allowInput: true,
       onChange: function(selectedDates, dateStr) {
         // Update end date min date when start date changes
-        endDatePicker.set("minDate", dateStr);
+        if (selectedDates[0]) {
+          endDatePicker.set("minDate", selectedDates[0]);
+        }
       }
     });
 
@@ -323,7 +326,9 @@
       enableTime: true,
       dateFormat: "Y-m-d H:i",
       time_24hr: true,
-      minDate: document.getElementById('startDate').value || "today"
+      // Use the selected start date as minDate if available
+      minDate: document.getElementById('startDate').value || null,
+      allowInput: true
     });
   });
 </script>

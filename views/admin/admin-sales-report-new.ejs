@@ -118,11 +118,19 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Sales</div>
+<<<<<<< HEAD
                             <div class="h5 mb-0 font-weight-bold text-gray-800">₹<%= summary.totalSales ? summary.totalSales.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></div>
                             <div class="small text-muted">Original: ₹<%= summary.totalOriginalValue ? summary.totalOriginalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+=======
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">$<%= summary.totalSales ? summary.totalSales.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></div>
+                            <div class="small text-muted">Original: $<%= summary.totalOriginalValue ? summary.totalOriginalValue.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                         </div>
                     </div>
                 </div>
@@ -154,7 +162,11 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 Total Discount</div>
+<<<<<<< HEAD
                             <div class="h5 mb-0 font-weight-bold text-gray-800">₹<%= summary.totalDiscount ? summary.totalDiscount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></div>
+=======
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">$<%= summary.totalDiscount ? summary.totalDiscount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></div>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                             <div class="small text-success"><%= summary.discountPercentage ? summary.discountPercentage.toFixed(1) : '0.0' %>% off</div>
                         </div>
                         <div class="col-auto">
@@ -173,7 +185,11 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Average Order Value</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
+<<<<<<< HEAD
                                 ₹<%= summary.avgOrderValue ? summary.avgOrderValue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %>
+=======
+                                $<%= summary.avgOrderValue ? summary.avgOrderValue.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                             </div>
                         </div>
                         <div class="col-auto">
@@ -208,26 +224,46 @@
                                 <tr>
                                     <td>Cash on Delivery</td>
                                     <td><%= paymentSummary.cod ? paymentSummary.cod.count || 0 : 0 %></td>
+<<<<<<< HEAD
                                     <td>₹<%= paymentSummary.cod && paymentSummary.cod.total ? paymentSummary.cod.total.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
                                     <td>₹<%= paymentSummary.cod && paymentSummary.cod.avg ? paymentSummary.cod.avg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
+=======
+                                    <td>$<%= paymentSummary.cod && paymentSummary.cod.total ? paymentSummary.cod.total.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+                                    <td>$<%= paymentSummary.cod && paymentSummary.cod.avg ? paymentSummary.cod.avg.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                 </tr>
                                 <tr>
                                     <td>Razorpay</td>
                                     <td><%= paymentSummary.razorpay ? paymentSummary.razorpay.count || 0 : 0 %></td>
+<<<<<<< HEAD
                                     <td>₹<%= paymentSummary.razorpay && paymentSummary.razorpay.total ? paymentSummary.razorpay.total.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
                                     <td>₹<%= paymentSummary.razorpay && paymentSummary.razorpay.avg ? paymentSummary.razorpay.avg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
+=======
+                                    <td>$<%= paymentSummary.razorpay && paymentSummary.razorpay.total ? paymentSummary.razorpay.total.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+                                    <td>$<%= paymentSummary.razorpay && paymentSummary.razorpay.avg ? paymentSummary.razorpay.avg.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                 </tr>
                                 <tr>
                                     <td>Wallet</td>
                                     <td><%= paymentSummary.wallet ? paymentSummary.wallet.count || 0 : 0 %></td>
+<<<<<<< HEAD
                                     <td>₹<%= paymentSummary.wallet && paymentSummary.wallet.total ? paymentSummary.wallet.total.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
                                     <td>₹<%= paymentSummary.wallet && paymentSummary.wallet.avg ? paymentSummary.wallet.avg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
+=======
+                                    <td>$<%= paymentSummary.wallet && paymentSummary.wallet.total ? paymentSummary.wallet.total.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+                                    <td>$<%= paymentSummary.wallet && paymentSummary.wallet.avg ? paymentSummary.wallet.avg.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                 </tr>
                                 <tr class="table-primary">
                                     <td><strong>Total</strong></td>
                                     <td><strong><%= summary.totalOrders || 0 %></strong></td>
+<<<<<<< HEAD
                                     <td><strong>₹<%= summary.totalSales ? summary.totalSales.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></strong></td>
                                     <td><strong>₹<%= summary.avgOrderValue ? summary.avgOrderValue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></strong></td>
+=======
+                                    <td><strong>$<%= summary.totalSales ? summary.totalSales.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></strong></td>
+                                    <td><strong>$<%= summary.avgOrderValue ? summary.avgOrderValue.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></strong></td>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                 </tr>
                             </tbody>
                         </table>
@@ -268,7 +304,11 @@
                                                 <span class="badge <%= badgeClass %>"><%= status.status %></span>
                                             </td>
                                             <td><%= status.count %></td>
+<<<<<<< HEAD
                                             <td>₹<%= status.revenue ? status.revenue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
+=======
+                                            <td>$<%= status.revenue ? status.revenue.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                             <td><%= ((status.count / totalCount) * 100).toFixed(1) %>%</td>
                                         </tr>
                                     <% }); %>
@@ -313,17 +353,29 @@
                                         <strong><%= product.name %></strong>
                                     </td>
                                     <td><%= product.quantity %></td>
+<<<<<<< HEAD
                                     <td>₹<%= product.originalPrice ? product.originalPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></td>
                                     <td>
                                         <% if (product.offerPercentage && product.offerPercentage > 0) { %>
                                             <span class="badge bg-success"><%= product.offerPercentage %>% OFF</span>
                                             <div class="small text-success">₹<%= product.totalDiscount ? product.totalDiscount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %> saved</div>
+=======
+                                    <td>$<%= product.originalPrice ? product.originalPrice.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></td>
+                                    <td>
+                                        <% if (product.offerPercentage && product.offerPercentage > 0) { %>
+                                            <span class="badge bg-success"><%= product.offerPercentage %>% OFF</span>
+                                            <div class="small text-success">$<%= product.totalDiscount ? product.totalDiscount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %> saved</div>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                         <% } else { %>
                                             <span class="text-muted">No discount</span>
                                         <% } %>
                                     </td>
                                     <td>
+<<<<<<< HEAD
                                         <strong>₹<%= product.revenue ? product.revenue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></strong>
+=======
+                                        <strong>$<%= product.revenue ? product.revenue.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></strong>
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                     </td>
                                 </tr>
                             <% }); %>
@@ -368,11 +420,19 @@
                                     <td><%= order.paymentMethod ? order.paymentMethod.toUpperCase() : 'UNKNOWN' %></td>
                                     <td><%= order.itemCount %> items</td>
                                     <td>
+<<<<<<< HEAD
                                         <strong>₹<%= order.finalAmount ? order.finalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00' %></strong>
                                         <% if (order.totalDiscount && order.totalDiscount > 0) { %>
                                             <div class="small text-success">
                                                 <i class="fas fa-tags"></i> <%= order.discountPercentage || 0 %>% off
                                                 (₹<%= order.totalDiscount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) %> saved)
+=======
+                                        <strong>$<%= order.finalAmount ? order.finalAmount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00' %></strong>
+                                        <% if (order.totalDiscount && order.totalDiscount > 0) { %>
+                                            <div class="small text-success">
+                                                <i class="fas fa-tags"></i> <%= order.discountPercentage || 0 %>% off
+                                                ($<%= order.totalDiscount.toLocaleString('en-US', { maximumFractionDigits: 2 }) %> saved)
+>>>>>>> 9031fbeed870f37596d46eb3aad87887c240d71f
                                             </div>
                                         <% } %>
                                     </td>

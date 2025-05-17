@@ -186,11 +186,12 @@
                                     <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-white transition border border-gray-700">
                                         <div class="relative">
                                             <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-64 object-cover">
-                                            <% if (product.isNew) { %>
+                                            <% if (product.hasOffer && product.discount > 0) { %>
+                                                <div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                                    <%= Math.round(product.discount) %>% OFF
+                                                </div>
+                                            <% } else if (product.isNew) { %>
                                                 <div class="absolute top-2 right-2 bg-white text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
-                                            <% } %>
-                                            <% if (product.discount > 0) { %>
-                                                <div class="absolute top-2 left-2 bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded border border-white">-<%= product.discount %>%</div>
                                             <% } %>
                                         </div>
                                         <div class="p-4">
@@ -297,11 +298,12 @@
                         <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-white transition border border-gray-700">
                             <div class="relative">
                                 <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-64 object-cover">
-                                <% if (product.isNew) { %>
+                                <% if (product.hasOffer && product.discount > 0) { %>
+                                    <div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                        <%= Math.round(product.discount) %>% OFF
+                                    </div>
+                                <% } else if (product.isNew) { %>
                                     <div class="absolute top-2 right-2 bg-white text-black text-xs font-bold px-2 py-1 rounded">NEW</div>
-                                <% } %>
-                                <% if (product.discount > 0) { %>
-                                    <div class="absolute top-2 left-2 bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded border border-white">-<%= product.discount %>%</div>
                                 <% } %>
                             </div>
                             <div class="p-4">

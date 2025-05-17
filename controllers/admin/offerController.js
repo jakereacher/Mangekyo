@@ -142,9 +142,19 @@ exports.renderEditProductOfferPage = async (req, res) => {
     offer.startDateFormatted = offer.startDate.toISOString().split('T')[0];
     offer.endDateFormatted = offer.endDate.toISOString().split('T')[0];
 
-    // Format dates with time for the flatpickr
-    offer.startDateTimeFormatted = offer.startDate.toISOString().replace('Z', '').replace('T', ' ').substring(0, 16);
-    offer.endDateTimeFormatted = offer.endDate.toISOString().replace('Z', '').replace('T', ' ').substring(0, 16);
+    // Format dates with time for the flatpickr (YYYY-MM-DD HH:MM format)
+    const formatDateForFlatpickr = (date) => {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    };
+
+    offer.startDateTimeFormatted = formatDateForFlatpickr(offer.startDate);
+    offer.endDateTimeFormatted = formatDateForFlatpickr(offer.endDate);
 
     res.render('admin/admin-product-offer-edit', {
       title: 'Edit Product Offer',
@@ -186,9 +196,19 @@ exports.renderEditCategoryOfferPage = async (req, res) => {
     offer.startDateFormatted = offer.startDate.toISOString().split('T')[0];
     offer.endDateFormatted = offer.endDate.toISOString().split('T')[0];
 
-    // Format dates with time for the flatpickr
-    offer.startDateTimeFormatted = offer.startDate.toISOString().replace('Z', '').replace('T', ' ').substring(0, 16);
-    offer.endDateTimeFormatted = offer.endDate.toISOString().replace('Z', '').replace('T', ' ').substring(0, 16);
+    // Format dates with time for the flatpickr (YYYY-MM-DD HH:MM format)
+    const formatDateForFlatpickr = (date) => {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    };
+
+    offer.startDateTimeFormatted = formatDateForFlatpickr(offer.startDate);
+    offer.endDateTimeFormatted = formatDateForFlatpickr(offer.endDate);
 
     res.render('admin/admin-category-offer-edit', {
       title: 'Edit Category Offer',
@@ -233,6 +253,35 @@ exports.createProductOffer = async (req, res) => {
       return res.redirect('/admin/product-offers/create');
     }
 
+    // Parse dates with time
+    let parsedStartDate, parsedEndDate;
+
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedEndDate: parsedEndDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      req.flash('error', 'Invalid date format. Please use the date picker to select dates.');
+      return res.redirect('/admin/product-offers/create');
+    }
+
+    // Validate date range
+    if (parsedStartDate >= parsedEndDate) {
+      req.flash('error', 'End date must be after start date');
+      return res.redirect('/admin/product-offers/create');
+    }
+
     // Create offer
     const offerData = {
       name,
@@ -240,8 +289,8 @@ exports.createProductOffer = async (req, res) => {
       type: 'product', // Always product for this route
       discountType,
       discountValue: parseFloat(discountValue),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       isActive: true
     };
 
@@ -311,6 +360,35 @@ exports.createCategoryOffer = async (req, res) => {
       return res.redirect('/admin/category-offers/create');
     }
 
+    // Parse dates with time
+    let parsedStartDate, parsedEndDate;
+
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedEndDate: parsedEndDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      req.flash('error', 'Invalid date format. Please use the date picker to select dates.');
+      return res.redirect('/admin/category-offers/create');
+    }
+
+    // Validate date range
+    if (parsedStartDate >= parsedEndDate) {
+      req.flash('error', 'End date must be after start date');
+      return res.redirect('/admin/category-offers/create');
+    }
+
     // Create offer
     const offerData = {
       name,
@@ -318,8 +396,8 @@ exports.createCategoryOffer = async (req, res) => {
       type: 'category', // Always category for this route
       discountType,
       discountValue: parseFloat(discountValue),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       isActive: true
     };
 
@@ -404,14 +482,43 @@ exports.updateProductOffer = async (req, res) => {
       return res.redirect('/admin/product-offers');
     }
 
+    // Parse dates with time
+    let parsedStartDate, parsedEndDate;
+
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedEndDate: parsedEndDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      req.flash('error', 'Invalid date format. Please use the date picker to select dates.');
+      return res.redirect(`/admin/product-offers/edit/${id}`);
+    }
+
+    // Validate date range
+    if (parsedStartDate >= parsedEndDate) {
+      req.flash('error', 'End date must be after start date');
+      return res.redirect(`/admin/product-offers/edit/${id}`);
+    }
+
     // Update offer data
     const offerData = {
       name,
       description,
       discountType,
       discountValue: parseFloat(discountValue),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       isActive: isActive === 'on' || isActive === true
     };
 
@@ -507,14 +614,43 @@ exports.updateCategoryOffer = async (req, res) => {
       return res.redirect('/admin/category-offers');
     }
 
+    // Parse dates with time
+    let parsedStartDate, parsedEndDate;
+
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedEndDate: parsedEndDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      req.flash('error', 'Invalid date format. Please use the date picker to select dates.');
+      return res.redirect(`/admin/category-offers/edit/${id}`);
+    }
+
+    // Validate date range
+    if (parsedStartDate >= parsedEndDate) {
+      req.flash('error', 'End date must be after start date');
+      return res.redirect(`/admin/category-offers/edit/${id}`);
+    }
+
     // Update offer data
     const offerData = {
       name,
       description,
       discountType,
       discountValue: parseFloat(discountValue),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       isActive: isActive === 'on' || isActive === true
     };
 

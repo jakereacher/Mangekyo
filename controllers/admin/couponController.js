@@ -61,13 +61,29 @@ const addCoupon = async (req, res) => {
     console.log('Add Coupon - Received dates:', { startDate, expiryDate });
 
     // Parse dates with time
-    const parsedStartDate = new Date(startDate);
-    const parsedExpiryDate = new Date(expiryDate);
+    let parsedStartDate, parsedExpiryDate;
 
-    console.log('Add Coupon - Parsed dates:', {
-      parsedStartDate: parsedStartDate.toISOString(),
-      parsedExpiryDate: parsedExpiryDate.toISOString()
-    });
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedExpiryDate = new Date(expiryDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedExpiryDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Add Coupon - Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedExpiryDate: parsedExpiryDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid date format. Please use the date picker to select dates."
+      });
+    }
 
     if (parsedStartDate >= parsedExpiryDate) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -220,13 +236,29 @@ const editCoupon = async (req, res) => {
     }
 
     // Parse dates with time
-    const parsedStartDate = new Date(startDate);
-    const parsedExpiryDate = new Date(expiryDate);
+    let parsedStartDate, parsedExpiryDate;
 
-    console.log('Parsed dates:', {
-      parsedStartDate: parsedStartDate.toISOString(),
-      parsedExpiryDate: parsedExpiryDate.toISOString()
-    });
+    try {
+      // Handle different date formats
+      parsedStartDate = new Date(startDate);
+      parsedExpiryDate = new Date(expiryDate);
+
+      // Check if dates are valid
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedExpiryDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      console.log('Parsed dates:', {
+        parsedStartDate: parsedStartDate.toISOString(),
+        parsedExpiryDate: parsedExpiryDate.toISOString()
+      });
+    } catch (error) {
+      console.error('Error parsing dates:', error);
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid date format. Please use the date picker to select dates."
+      });
+    }
 
     // Validate date logic
     if (parsedStartDate >= parsedExpiryDate) {

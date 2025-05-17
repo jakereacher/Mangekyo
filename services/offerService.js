@@ -69,6 +69,13 @@ const getValidOffersForProduct = async (productId) => {
     return offer.isActive && offer.startDate <= now && offer.endDate >= now;
   });
 
+  // Log if both offer types are available
+  if (validProductOffers.length > 0 && validCategoryOffers.length > 0) {
+    console.log(`Product ${product.productName} (${productId}) has both product and category offers available.`);
+    console.log(`- Product offers: ${validProductOffers.map(o => `${o.name} (${o.discountType}: ${o.discountValue})`).join(', ')}`);
+    console.log(`- Category offers: ${validCategoryOffers.map(o => `${o.name} (${o.discountType}: ${o.discountValue})`).join(', ')}`);
+  }
+
   return [...validProductOffers, ...validCategoryOffers];
 };
 
@@ -90,9 +97,14 @@ const getBestOfferForProduct = async (productId, price) => {
     };
   }
 
+  // Group offers by type for better logging
+  const productOffers = offers.filter(offer => offer.type === 'product');
+  const categoryOffers = offers.filter(offer => offer.type === 'category');
+
   // Calculate discount for each offer and find the best one
   let bestOffer = null;
   let maxDiscount = 0;
+  let offerDiscounts = [];
 
   for (const offer of offers) {
     // Double-check offer validity before calculating discount
@@ -103,10 +115,102 @@ const getBestOfferForProduct = async (productId, price) => {
 
     const discountAmount = offer.calculateDiscount(price);
 
+    // Store discount information for logging
+    offerDiscounts.push({
+      name: offer.name,
+      type: offer.type,
+      discountType: offer.discountType,
+      discountValue: offer.discountValue,
+      discountAmount: discountAmount,
+      offerEndDate: offer.endDate
+    });
+
     if (discountAmount > maxDiscount) {
       maxDiscount = discountAmount;
       bestOffer = offer;
     }
+  }
+
+  // Log detailed information when multiple offers are available
+  if (productOffers.length > 0 && categoryOffers.length > 0) {
+    const product = await Product.findById(productId);
+    const productName = product ? product.productName : productId;
+
+    console.log(`\n=== Offer Comparison for ${productName} (Original Price: ₹${price}) ===`);
+
+    // Find best product offer and best category offer
+    let bestProductOffer = null;
+    let bestProductDiscount = 0;
+    let bestCategoryOffer = null;
+    let bestCategoryDiscount = 0;
+
+    // Find best product offer
+    for (const offer of productOffers) {
+      if (!offer.isActive || offer.startDate > now || offer.endDate < now) continue;
+      const discountAmount = offer.calculateDiscount(price);
+      if (discountAmount > bestProductDiscount) {
+        bestProductDiscount = discountAmount;
+        bestProductOffer = offer;
+      }
+    }
+
+    // Find best category offer
+    for (const offer of categoryOffers) {
+      if (!offer.isActive || offer.startDate > now || offer.endDate < now) continue;
+      const discountAmount = offer.calculateDiscount(price);
+      if (discountAmount > bestCategoryDiscount) {
+        bestCategoryDiscount = discountAmount;
+        bestCategoryOffer = offer;
+      }
+    }
+
+    // Compare best product offer vs best category offer
+    console.log(`\n--- PRODUCT vs CATEGORY OFFER COMPARISON ---`);
+
+    if (bestProductOffer) {
+      console.log(`BEST PRODUCT OFFER: ${bestProductOffer.name}`);
+      console.log(`- Discount: ${bestProductOffer.discountType === 'percentage' ? bestProductOffer.discountValue + '%' : '₹' + bestProductOffer.discountValue}`);
+      console.log(`- Amount Off: ₹${bestProductDiscount.toFixed(2)}`);
+      console.log(`- Final Price: ₹${(price - bestProductDiscount).toFixed(2)}`);
+    } else {
+      console.log(`NO VALID PRODUCT OFFERS AVAILABLE`);
+    }
+
+    console.log(`\nvs\n`);
+
+    if (bestCategoryOffer) {
+      console.log(`BEST CATEGORY OFFER: ${bestCategoryOffer.name}`);
+      console.log(`- Discount: ${bestCategoryOffer.discountType === 'percentage' ? bestCategoryOffer.discountValue + '%' : '₹' + bestCategoryOffer.discountValue}`);
+      console.log(`- Amount Off: ₹${bestCategoryDiscount.toFixed(2)}`);
+      console.log(`- Final Price: ₹${(price - bestCategoryDiscount).toFixed(2)}`);
+    } else {
+      console.log(`NO VALID CATEGORY OFFERS AVAILABLE`);
+    }
+
+    // Determine which offer is better
+    if (bestProductDiscount > bestCategoryDiscount) {
+      console.log(`\n✓ PRODUCT OFFER IS BETTER BY ₹${(bestProductDiscount - bestCategoryDiscount).toFixed(2)}`);
+    } else if (bestCategoryDiscount > bestProductDiscount) {
+      console.log(`\n✓ CATEGORY OFFER IS BETTER BY ₹${(bestCategoryDiscount - bestProductDiscount).toFixed(2)}`);
+    } else if (bestProductOffer && bestCategoryOffer) {
+      console.log(`\n✓ BOTH OFFERS PROVIDE THE SAME DISCOUNT`);
+    }
+
+    // Show all offers sorted by discount amount
+    console.log(`\n--- ALL AVAILABLE OFFERS (SORTED BY DISCOUNT) ---`);
+    offerDiscounts.sort((a, b) => b.discountAmount - a.discountAmount);
+
+    offerDiscounts.forEach(info => {
+      const isSelected = bestOffer && bestOffer.name === info.name;
+      const marker = isSelected ? '✓ SELECTED' : '';
+      console.log(`${info.type.toUpperCase()} OFFER: ${info.name} - ₹${info.discountAmount.toFixed(2)} off (${info.discountType}: ${info.discountValue}) ${marker}`);
+    });
+
+    console.log(`\n--- FINAL SELECTION ---`);
+    console.log(`Final price after best offer: ₹${(price - maxDiscount).toFixed(2)}`);
+    console.log(`Selected offer: ${bestOffer.name} (${bestOffer.type})`);
+    console.log(`Offer valid until: ${bestOffer.endDate.toLocaleDateString()}`);
+    console.log('=============================================\n');
   }
 
   return {

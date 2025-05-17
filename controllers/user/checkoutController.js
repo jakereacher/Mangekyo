@@ -6,7 +6,7 @@ const Wallet = require("../../models/walletSchema");
 const WalletTransaction = require("../../models/walletTransactionSchema");
 const Coupon = require("../../models/couponSchema");
 const StatusCodes = require("../../utils/httpStatusCodes");
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 const { razorpayKeyId } = require("../../config/razorpay");
 const { processWalletPayment } = require("./walletController");
 
@@ -510,33 +510,46 @@ exports.placeOrder = async (req, res) => {
       console.error("Failed to clear cart:", error);
     }
 
-    // For Razorpay payments, always return JSON response
-    // This is needed for the frontend to initiate the Razorpay payment flow
-    if (paymentMethod === 'razorpay' || req.xhr || req.headers.accept.includes('application/json')) {
+    // Check if the request accepts HTML (browser request) or JSON (API request)
+    const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
+    const isXhr = req.xhr || (req.headers['x-requested-with'] === 'XMLHttpRequest');
+
+    // Set a session flag to indicate this order has been processed
+    // This helps prevent duplicate orders when using back button
+    req.session.lastOrderId = newOrder._id;
+    req.session.lastOrderTime = Date.now();
+
+    if (acceptsHtml && !isXhr) {
+      // If it's a direct browser request (like from back button), redirect to the order page
+      return res.redirect(`/orders/${newOrder._id}`);
+    } else {
+      // For API requests (like AJAX) or XHR requests, return JSON
+
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Order placed successfully",
         orderId: newOrder._id,
       });
     }
-
-    // For non-AJAX requests and non-Razorpay payments, redirect to the order details page
-    return res.redirect(`/orders/${newOrder._id}`);
   } catch (error) {
     console.error("Error placing order:", error);
 
-    // Return JSON response for AJAX requests
-    if (req.xhr || req.headers.accept.includes('application/json')) {
+    // Check if the request accepts HTML (browser request) or JSON (API request)
+    const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
+    const isXhr = req.xhr || (req.headers['x-requested-with'] === 'XMLHttpRequest');
+
+    if (acceptsHtml && !isXhr) {
+      // If it's a direct browser request, redirect to cart with error message
+      req.flash('error', `Failed to place order: ${error.message}`);
+      return res.redirect('/cart');
+    } else {
+      // For API requests, return JSON error
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Failed to place order",
         error: error.message,
       });
     }
-
-    // For non-AJAX requests, redirect to cart with error message
-    req.flash('error', `Failed to place order: ${error.message}`);
-    return res.redirect('/cart');
   }
 };
 

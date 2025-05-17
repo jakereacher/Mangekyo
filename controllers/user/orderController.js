@@ -278,7 +278,7 @@ const getOrderDetails = async (req, res) => {
     res.render("orderDetails", {
       order: orderDetails,
       user: req.session.user ? { id: userId } : null,
-      razorpayKeyId: safeRazorpayKeyId
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_your_key_id'
     });
   } catch (error) {
     console.error("Error fetching order details:", error);
@@ -566,7 +566,17 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    // Allow direct cancellation for all payment methods
+    // Check if this is a Razorpay with successful payment or wallet order
+    if ((order.paymentMethod === 'razorpay' && order.paymentStatus === 'Paid') || order.paymentMethod === 'wallet') {
+      return res.status(400)
+        .header('Content-Type', 'application/json')
+        .json({
+          success: false,
+          message: "Paid orders require admin approval for cancellation. Please use the Request Cancellation option.",
+        });
+    }
+
+    // Allow direct cancellation for failed Razorpay payments or COD
     console.log(`Processing direct cancellation for order: ${orderId}, payment method: ${order.paymentMethod}, payment status: ${order.paymentStatus}`);
 
     const item = order.orderedItems.find(
@@ -598,45 +608,6 @@ const cancelOrder = async (req, res) => {
       $inc: { quantity: item.quantity },
     });
 
-    // Process refund for paid orders (Razorpay or wallet)
-    if ((order.paymentMethod === 'razorpay' && order.paymentStatus === 'Paid') || order.paymentMethod === 'wallet') {
-      try {
-        console.log(`Starting refund process for order: ${orderId}, payment method: ${order.paymentMethod}`);
-
-        // Calculate refund amount
-        const refundAmount = item.price * item.quantity;
-        console.log(`Calculated refund amount: ${refundAmount}`);
-
-        // Find or create user wallet
-        let wallet = await Wallet.findOne({ user: userId });
-        if (!wallet) {
-          wallet = new Wallet({ user: userId, balance: 0 });
-        }
-
-        // Add refund to wallet
-        const previousBalance = wallet.balance;
-        wallet.balance += refundAmount;
-        await wallet.save();
-        console.log(`Updated wallet balance from ${previousBalance} to ${wallet.balance}`);
-
-        // Create wallet transaction record
-        const walletTransaction = new WalletTransaction({
-          user: userId,
-          amount: refundAmount,
-          type: "credit",
-          description: `Refund for cancelled item in order #${orderId.toString().substring(0, 8)}`,
-          status: "completed",
-          orderId: orderId
-        });
-
-        await walletTransaction.save();
-        console.log(`Refund processed successfully: Amount: ${refundAmount}, Transaction: ${walletTransaction._id}`);
-      } catch (refundError) {
-        console.error("Error processing refund:", refundError.message);
-        // Continue with cancellation even if refund fails
-      }
-    }
-
     res.status(200)
       .header('Content-Type', 'application/json')
       .json({
@@ -656,6 +627,99 @@ const cancelOrder = async (req, res) => {
 }
 
 
+    if (!userId) {
+      return res.status(401)
+        .header('Content-Type', 'application/json')
+        .json({
+          success: false,
+          message: "User not authenticated",
+        });
+    }
+
+    if (!productId || !cancellationReason) {
+      return res.status(400)
+        .header('Content-Type', 'application/json')
+        .json({
+          success: false,
+          message: "Product ID and cancellation reason are required",
+        });
+    }
+
+    const order = await Order.findOne({ _id: orderId, userId });
+
+    if (!order) {
+      return res.status(404)
+        .header('Content-Type', 'application/json')
+        .json({
+          success: false,
+          message: "Order not found",
+        });
+    }
+
+    // Verify this is a paid Razorpay or wallet order
+    if (!((order.paymentMethod === 'razorpay' && order.paymentStatus === 'Paid') || order.paymentMethod === 'wallet')) {
+      return res.status(400)
+        .header('Content-Type', 'application/json')
+        .json({
+          success: false,
+          message: "Only paid orders require cancellation requests. For COD orders or failed Razorpay payments, use the Cancel Order option.",
+        });
+    }
+
+    console.log(`Processing cancellation request for order: ${orderId}, payment method: ${order.paymentMethod}, payment status: ${order.paymentStatus}`);
+
+    const item = order.orderedItems.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found in order",
+      });
+    }
+
+    if (item.status !== "Processing") {
+      return res.status(400).json({
+        success: false,
+        message: "This product cannot be cancelled at its current stage",
+      });
+    }
+
+    // Check if this item has been previously rejected for cancellation
+    if (item.order_cancel_status === "Rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "This product's cancellation was previously rejected and cannot be cancelled again",
+      });
+    }
+
+    // Update item status to Cancellation Pending
+    item.status = "Cancellation Pending";
+    item.order_cancel_reason = cancellationReason;
+    order.cancellation_reason = cancellationReason;
+    order.cancellation_status = "Pending";
+    order.cancellation_requested_at = new Date();
+
+    await order.save();
+
+    res.status(200)
+      .header('Content-Type', 'application/json')
+      .json({
+        success: true,
+        message: "Cancellation request submitted successfully",
+      });
+  } catch (error) {
+    console.error("Error requesting cancellation:", error);
+    res.status(500)
+      .header('Content-Type', 'application/json')
+      .json({
+        success: false,
+        message: "Failed to submit cancellation request",
+        error: error.message,
+      });
+  }
+}
 
 /**
  * Submit a return request for a specific product in an order.
